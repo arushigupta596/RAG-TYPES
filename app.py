@@ -13,6 +13,17 @@ sys.path.insert(0, _REPO_ROOT)
 
 import streamlit as st
 
+# ── Bootstrap: copy st.secrets → os.environ before any cache functions run ───
+# st.secrets IS available here (module level, after st import) but NOT inside
+# st.cache_resource on cold boot. Copying to os.environ ensures _get() in
+# config.py always finds the keys via os.getenv(), which works everywhere.
+try:
+    for _k, _v in st.secrets.items():
+        if isinstance(_v, str) and _k not in os.environ:
+            os.environ[_k] = _v
+except Exception:
+    pass  # Local dev: secrets come from .env via python-dotenv
+
 
 st.set_page_config(
     page_title="RAG Architecture Showcase",
