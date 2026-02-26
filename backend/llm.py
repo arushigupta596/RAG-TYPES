@@ -2,11 +2,11 @@
 # Single module that creates LLM clients — import from here, nowhere else
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from backend.config import (
-    OPENROUTER_API_KEY,
-    OPENROUTER_BASE_URL,
-    GENERATION_MODEL,
-    GRADING_MODEL,
-    EMBEDDING_MODEL,
+    get_openrouter_api_key,
+    get_openrouter_base_url,
+    get_generation_model,
+    get_grading_model,
+    get_embedding_model,
 )
 
 _HEADERS = {
@@ -17,9 +17,9 @@ _HEADERS = {
 
 def get_generation_llm(streaming: bool = False) -> ChatOpenAI:
     return ChatOpenAI(
-        model=GENERATION_MODEL,
-        openai_api_key=OPENROUTER_API_KEY,
-        openai_api_base=OPENROUTER_BASE_URL,
+        model=get_generation_model(),
+        openai_api_key=get_openrouter_api_key(),
+        openai_api_base=get_openrouter_base_url(),
         streaming=streaming,
         temperature=0.0,
         default_headers=_HEADERS,
@@ -28,9 +28,9 @@ def get_generation_llm(streaming: bool = False) -> ChatOpenAI:
 
 def get_grading_llm() -> ChatOpenAI:
     return ChatOpenAI(
-        model=GRADING_MODEL,
-        openai_api_key=OPENROUTER_API_KEY,
-        openai_api_base=OPENROUTER_BASE_URL,
+        model=get_grading_model(),
+        openai_api_key=get_openrouter_api_key(),
+        openai_api_base=get_openrouter_base_url(),
         temperature=0.0,
         default_headers=_HEADERS,
     )
@@ -39,7 +39,7 @@ def get_grading_llm() -> ChatOpenAI:
 def get_embeddings() -> OpenAIEmbeddings:
     """OpenRouter proxies OpenAI embedding endpoints."""
     return OpenAIEmbeddings(
-        model=EMBEDDING_MODEL,
-        openai_api_key=OPENROUTER_API_KEY,
-        openai_api_base=OPENROUTER_BASE_URL,
+        model=get_embedding_model(),
+        openai_api_key=get_openrouter_api_key(),
+        openai_api_base=get_openrouter_base_url(),
     )

@@ -6,27 +6,30 @@ load_dotenv()
 
 
 def _get(key, default=""):
+    # Always re-read at call time so st.secrets is available after session init
     val = os.getenv(key, "")
     if val:
         return val
     try:
         import streamlit as st
-        return st.secrets.get(key, default)
+        val = st.secrets.get(key, "")
+        if val:
+            return val
     except Exception:
-        return default
+        pass
+    return default
 
 
-OPENROUTER_API_KEY  = _get("OPENROUTER_API_KEY")
-OPENROUTER_BASE_URL = _get("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+# These are called lazily (inside functions) in llm.py — do NOT cache at module level
+def get_openrouter_api_key():  return _get("OPENROUTER_API_KEY")
+def get_openrouter_base_url(): return _get("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+def get_generation_model():    return _get("GENERATION_MODEL", "anthropic/claude-3.5-sonnet")
+def get_grading_model():       return _get("GRADING_MODEL",    "anthropic/claude-3-haiku")
+def get_embedding_model():     return _get("EMBEDDING_MODEL",  "openai/text-embedding-3-small")
+def get_tavily_api_key():      return _get("TAVILY_API_KEY")
 
-# Models — change here only, nowhere else in the codebase
-GENERATION_MODEL = _get("GENERATION_MODEL", "anthropic/claude-3.5-sonnet")
-GRADING_MODEL    = _get("GRADING_MODEL",    "anthropic/claude-3-haiku")
-EMBEDDING_MODEL  = _get("EMBEDDING_MODEL",  "openai/text-embedding-3-small")
-
-# CRAG
+# Non-secret constants — safe to read at import time
 CRAG_QUALITY_THRESHOLD = 0.5
-TAVILY_API_KEY = _get("TAVILY_API_KEY")
 
 # ChromaDB
 _BASE_DIR         = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

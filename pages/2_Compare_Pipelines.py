@@ -13,7 +13,7 @@ import pandas as pd
 
 from backend.pipelines import PIPELINE_MAP, PIPELINE_OPTIONS
 from backend.pipelines.base import RAGResponse
-from backend.config import GENERATION_MODEL, GRADING_MODEL
+from backend.config import get_generation_model, get_grading_model
 
 st.set_page_config(
     page_title="Compare Pipelines | RAG Showcase",
@@ -131,8 +131,8 @@ with st.sidebar:
     )
 
     st.divider()
-    st.caption(f"Generation: `{GENERATION_MODEL}`")
-    st.caption(f"Grading: `{GRADING_MODEL}`")
+    st.caption(f"Generation: `{get_generation_model()}`")
+    st.caption(f"Grading: `{get_grading_model()}`")
 
     st.divider()
     st.markdown("### Demo Queries")

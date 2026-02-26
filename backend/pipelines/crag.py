@@ -12,7 +12,7 @@ from backend.pipelines.base import BaseRAGPipeline, RAGResponse, TraceStep
 from backend.pipelines.self_rag_prompts import CRAG_GRADE_PROMPT
 from backend.ingest.embedder import get_vectorstore
 from backend.llm import get_generation_llm, get_grading_llm
-from backend.config import CRAG_QUALITY_THRESHOLD, TAVILY_API_KEY
+from backend.config import CRAG_QUALITY_THRESHOLD, get_tavily_api_key
 
 RETRIEVE_K = 5
 
@@ -37,7 +37,7 @@ def _tavily_search(query: str, max_results: int = 3) -> list[dict]:
     """Run Tavily web search. Returns list of {title, url, content}."""
     try:
         from tavily import TavilyClient
-        client = TavilyClient(api_key=TAVILY_API_KEY)
+        client = TavilyClient(api_key=get_tavily_api_key())
         results = client.search(query=query, max_results=max_results)
         return [
             {
@@ -127,7 +127,7 @@ class CRAGPipeline(BaseRAGPipeline):
 
         # ── Step 3: web fallback (conditional) ────────────────────────────
         if web_triggered:
-            if not TAVILY_API_KEY:
+            if not get_tavily_api_key():
                 trace.append(TraceStep(
                     step="ERROR",
                     description=(
