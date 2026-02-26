@@ -29,7 +29,8 @@ CRAG_QUALITY_THRESHOLD = 0.5
 TAVILY_API_KEY = _get("TAVILY_API_KEY")
 
 # ChromaDB
-CHROMA_PATH       = "./chroma_db"
+_BASE_DIR         = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+CHROMA_PATH       = os.path.join(_BASE_DIR, "chroma_db")
 CHROMA_COLLECTION = "rag_showcase"
 
 # Chunking
@@ -37,5 +38,5 @@ CHUNK_SIZE    = 800
 CHUNK_OVERLAP = 150
 
 # Data
-DOCS_DIR   = "./data/docs"
-GRAPH_PATH = "./data/graph.pkl"
+DOCS_DIR   = os.path.join(_BASE_DIR, "data", "docs")
+GRAPH_PATH = os.path.join(_BASE_DIR, "data", "graph.pkl")

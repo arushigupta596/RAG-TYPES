@@ -4,9 +4,12 @@ Launch with: streamlit run app.py
 """
 from __future__ import annotations
 
-import sys, os, subprocess
+import sys, os
 from pathlib import Path
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
+# Ensure repo root is on sys.path so backend imports work
+_REPO_ROOT = os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(0, _REPO_ROOT)
 
 import streamlit as st
 
@@ -21,10 +24,48 @@ st.set_page_config(
 
 @st.cache_resource(show_spinner="Building vector store on first run (approx. 2 min)...")
 def _auto_ingest():
-    chroma_ready = Path("./chroma_db/chroma.sqlite3").exists()
-    graph_ready  = Path("./data/graph.pkl").exists()
-    if not chroma_ready or not graph_ready:
-        subprocess.run([sys.executable, "scripts/ingest.py"], check=True)
+    repo_root   = Path(_REPO_ROOT)
+    chroma_ready = (repo_root / "chroma_db" / "chroma.sqlite3").exists()
+    graph_ready  = (repo_root / "data" / "graph.pkl").exists()
+    if chroma_ready and graph_ready:
+        return
+
+    # Run ingest inline (avoids subprocess working-dir and st.secrets issues)
+    from tqdm import tqdm
+    from backend.config import DOCS_DIR, CHROMA_COLLECTION, GRAPH_PATH
+    from backend.ingest.loader import load_pdf
+    from backend.ingest.chunker import chunk_documents
+    from backend.ingest.embedder import get_vectorstore_direct
+    from backend.graph.builder import build_graph
+    from langchain_chroma import Chroma
+
+    docs_dir  = repo_root / "data" / "docs"
+    pdf_paths = sorted(docs_dir.glob("*.pdf"))
+    if not pdf_paths:
+        st.error(f"No PDFs found in {docs_dir}. Please add PDFs to data/docs/ and redeploy.")
+        st.stop()
+
+    all_chunks = []
+    for pdf_path in pdf_paths:
+        pages  = load_pdf(pdf_path)
+        chunks = chunk_documents(pages)
+        all_chunks.extend(chunks)
+
+    vs = get_vectorstore_direct()
+    try:
+        existing = vs.get(include=["metadatas"])
+        existing_ids: set[str] = {
+            m["chunk_id"] for m in existing.get("metadatas", []) if m and "chunk_id" in m
+        }
+    except Exception:
+        existing_ids = set()
+
+    new_chunks = [c for c in all_chunks if c.metadata.get("chunk_id", "") not in existing_ids]
+    BATCH_SIZE = 100
+    for i in range(0, len(new_chunks), BATCH_SIZE):
+        vs.add_documents(new_chunks[i : i + BATCH_SIZE])
+
+    build_graph(all_chunks, str(repo_root / "data" / "graph.pkl"))
 
 _auto_ingest()
 
