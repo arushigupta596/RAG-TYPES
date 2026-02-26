@@ -42,4 +42,5 @@ def get_embeddings() -> OpenAIEmbeddings:
         model=get_embedding_model(),
         openai_api_key=get_openrouter_api_key(),
         openai_api_base=get_openrouter_base_url(),
+        default_headers=_HEADERS,
     )

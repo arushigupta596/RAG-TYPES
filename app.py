@@ -31,18 +31,8 @@ st.set_page_config(
 )
 
 
-# ── Secrets diagnostics (remove after confirmed working) ──────────────────────
 if _secrets_error:
-    st.error(f"❌ st.secrets error: {_secrets_error}")
-else:
-    _secret_keys = list(st.secrets.keys()) if hasattr(st.secrets, "keys") else []
-    _env_key_set  = "OPENROUTER_API_KEY" in os.environ
-    _env_key_val  = os.environ.get("OPENROUTER_API_KEY", "")[:8] + "..." if _env_key_set else "MISSING"
-    st.info(
-        f"🔑 Secret keys found: `{_secret_keys}` | "
-        f"OPENROUTER_API_KEY in os.environ: `{_env_key_set}` | "
-        f"Value prefix: `{_env_key_val}`"
-    )
+    st.error(f"❌ Could not load secrets: {_secrets_error}")
 
 @st.cache_resource(show_spinner="Building vector store on first run (approx. 2 min)...")
 def _auto_ingest():
