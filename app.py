@@ -14,15 +14,13 @@ sys.path.insert(0, _REPO_ROOT)
 import streamlit as st
 
 # ── Bootstrap: copy st.secrets → os.environ before any cache functions run ───
-# st.secrets IS available here (module level, after st import) but NOT inside
-# st.cache_resource on cold boot. Copying to os.environ ensures _get() in
-# config.py always finds the keys via os.getenv(), which works everywhere.
+_secrets_error = None
 try:
     for _k, _v in st.secrets.items():
-        if isinstance(_v, str) and _k not in os.environ:
-            os.environ[_k] = _v
-except Exception:
-    pass  # Local dev: secrets come from .env via python-dotenv
+        if isinstance(_v, str):
+            os.environ[_k] = _v  # always overwrite so cache functions see the value
+except Exception as _e:
+    _secrets_error = str(_e)  # surface below after set_page_config
 
 
 st.set_page_config(
@@ -32,6 +30,19 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+
+# ── Secrets diagnostics (remove after confirmed working) ──────────────────────
+if _secrets_error:
+    st.error(f"❌ st.secrets error: {_secrets_error}")
+else:
+    _secret_keys = list(st.secrets.keys()) if hasattr(st.secrets, "keys") else []
+    _env_key_set  = "OPENROUTER_API_KEY" in os.environ
+    _env_key_val  = os.environ.get("OPENROUTER_API_KEY", "")[:8] + "..." if _env_key_set else "MISSING"
+    st.info(
+        f"🔑 Secret keys found: `{_secret_keys}` | "
+        f"OPENROUTER_API_KEY in os.environ: `{_env_key_set}` | "
+        f"Value prefix: `{_env_key_val}`"
+    )
 
 @st.cache_resource(show_spinner="Building vector store on first run (approx. 2 min)...")
 def _auto_ingest():
